@@ -22,20 +22,28 @@ import (
 		kustomizations: int | *100
 		helmreleases:   int | *100
 	}
+
+	imagePullSecrets?: [...#PullSecretSpec]
 }
 
 // Instance takes the config values and outputs the Kubernetes objects.
 #Instance: {
 	config: #Config
 
+	imagePullSecrets: [for i, spec in config.imagePullSecrets {#PullSecret & {#config: config, #spec: spec}}]
+
 	objects: {
 		namespace: #Namespace & {#config: config}
-		serviceAccount: #ServiceAccount & {#config: config}
+		serviceAccount: #ServiceAccount & {#config: config, #imagePullSecrets: [for i in imagePullSecrets {{name: i.metadata.name}}]}
 		roleBinding: #NamespaceAdmin & {#config: config}
 		resourcequota: #ResourceQuota & {#config: config}
 	}
 
 	if config.role == "cluster-admin" {
 		objects: clusterRoleBinding: #ClusterAdmin & {#config: config}
+	}
+
+	if imagePullSecrets != _|_ {
+		objects: {for i in imagePullSecrets {"\(i.#spec.name)": i}}
 	}
 }

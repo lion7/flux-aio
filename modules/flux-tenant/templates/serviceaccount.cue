@@ -2,10 +2,12 @@ package templates
 
 import (
 	corev1 "k8s.io/api/core/v1"
+	timoniv1 "timoni.sh/core/v1alpha1"
 )
 
 #ServiceAccount: corev1.#ServiceAccount & {
 	#config:    #Config
+	#imagePullSecrets: [...timoniv1.#ObjectReference]
 	apiVersion: "v1"
 	kind:       "ServiceAccount"
 	metadata: {
@@ -15,5 +17,8 @@ import (
 		if #config.metadata.annotations != _|_ {
 			annotations: #config.metadata.annotations
 		}
+	}
+	if #imagePullSecrets != _|_ {
+		imagePullSecrets: #imagePullSecrets
 	}
 }
